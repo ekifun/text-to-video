@@ -11,13 +11,18 @@ import (
 )
 
 func SubmitJob(c *gin.Context) {
+    fmt.Println("➡️  Entered SubmitJob handler")
+
     var req struct {
         Prompt string `json:"prompt"`
     }
     if err := c.BindJSON(&req); err != nil {
+        fmt.Printf("❌ Failed to parse request: %v\n", err)
         c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
         return
     }
+
+    fmt.Printf("📨 Received prompt: %s\n", req.Prompt)
 
     jobID := utils.GenerateUUID()
     job := models.Job{
@@ -26,16 +31,21 @@ func SubmitJob(c *gin.Context) {
         Status: "pending",
     }
 
+    fmt.Println("💾 Saving job to Redis")
     if err := redis.SaveJob(job); err != nil {
+        fmt.Printf("❌ Failed to save job: %v\n", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save job"})
         return
     }
 
+    fmt.Println("📤 Publishing job to Kafka")
     if err := kafka.ProduceJob(job); err != nil {
+        fmt.Printf("❌ Failed to produce job to Kafka: %v\n", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to enqueue job"})
         return
     }
 
+    fmt.Printf("✅ Job %s submitted successfully\n", jobID)
     c.JSON(http.StatusAccepted, gin.H{"job_id": jobID})
 }
 
