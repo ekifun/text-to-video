@@ -13,8 +13,18 @@ var rdb = redis.NewClient(&redis.Options{
 })
 
 func SaveJob(job models.Job) error {
-    data, _ := json.Marshal(job)
-    return rdb.HSet(ctx, "job:"+job.ID, "data", data).Err()
+    ctx := context.Background()
+    data, err := json.Marshal(job)
+    if err != nil {
+        fmt.Printf("❌ JSON marshal error: %v\n", err)
+        return err
+    }
+
+    err = redisClient.Set(ctx, job.ID, data, 0).Err()
+    if err != nil {
+        fmt.Printf("❌ Redis SET error: %v\n", err)
+    }
+    return err
 }
 
 func GetJob(id string) (models.Job, error) {
