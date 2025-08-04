@@ -1,0 +1,6 @@
+kafka-python
+redis
+torch
+huggingface_hub
+accelerate
+transformers
