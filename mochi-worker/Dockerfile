@@ -18,7 +18,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Add source code
 COPY mochi_worker.py .
-COPY --chmod=755 ./entrypoint.sh .
+COPY ./entrypoint.sh .
+RUN chmod +x entrypoint.sh
 
 # HuggingFace model and utils will be mounted externally or downloaded on the fly
 
