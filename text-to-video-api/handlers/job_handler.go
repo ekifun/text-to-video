@@ -8,6 +8,7 @@ import (
     "text-to-video-api/utils"
 
     "github.com/gin-gonic/gin"
+	"fmt"
 )
 
 func SubmitJob(c *gin.Context) {
