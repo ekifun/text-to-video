@@ -5,6 +5,7 @@ import (
     "text-to-video-api/models"
     "github.com/redis/go-redis/v9"
     "context"
+	"fmt"
 )
 
 var ctx = context.Background()
