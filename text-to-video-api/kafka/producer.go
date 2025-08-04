@@ -3,7 +3,6 @@ package kafka
 import (
     "context"
     "encoding/json"
-    "log"
     "text-to-video-api/models"
 
     "github.com/segmentio/kafka-go"
