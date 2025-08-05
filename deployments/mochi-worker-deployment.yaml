@@ -2,8 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mochi-worker
+  labels:
+    app: mochi-worker
 spec:
-  replicas: 1
+  replicas: 1  # Set to 1 per GPU node, or use HPA below
   selector:
     matchLabels:
       app: mochi-worker
@@ -11,29 +13,47 @@ spec:
     metadata:
       labels:
         app: mochi-worker
+      annotations:
+        prometheus.io/scrape: "true"              # optional
+        prometheus.io/port: "8080"                # optional
     spec:
       containers:
         - name: mochi-worker
-          image: mochi-worker:latest
+          image: your-dockerhub-user/mochi-worker:latest  # 🔁 replace with your image
+          imagePullPolicy: Always
           resources:
             limits:
-              nvidia.com/gpu: 1
+              nvidia.com/gpu: 1                  # 🚀 GPU scheduling
+              cpu: "2"
+              memory: "8Gi"
+            requests:
+              cpu: "1"
+              memory: "4Gi"
           env:
-            - name: REDIS_HOST
-              value: redis-service
+            - name: KAFKA_TOPIC
+              value: "video-jobs"
             - name: KAFKA_BROKERS
-              value: kafka-service:9092
+              value: "kafka:9092"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: MODEL_DIR
+              value: "/models/mochi"
+            - name: OUTPUT_DIR
+              value: "/output"
           volumeMounts:
+            - name: output-volume
+              mountPath: /output
             - name: model-volume
-              mountPath: /app/model_decoder
-              readOnly: true
-            - name: video-output
-              mountPath: /app/videos
+              mountPath: /models/mochi
+          ports:
+            - containerPort: 8080
+              name: metrics                      # optional for Prometheus
       restartPolicy: Always
       volumes:
+        - name: output-volume
+          persistentVolumeClaim:
+            claimName: mochi-output-pvc         # define this PVC
         - name: model-volume
-          persistentVolumeClaim:
-            claimName: model-pvc
-        - name: video-output
-          persistentVolumeClaim:
-            claimName: video-output-pvc
+          hostPath:                             # assumes model is preloaded
+            path: /mnt/models/mochi             # adjust path on host
+            type: Directory
