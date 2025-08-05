@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: mochi-worker
-          image: your-dockerhub-user/mochi-worker:latest  # 🔁 replace with your image
+          image: chenghao/mochi-worker:latest  # 🔁 replace with your image
           imagePullPolicy: Always
           resources:
             limits:
