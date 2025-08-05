@@ -14,6 +14,9 @@ import (
 )
 
 func main() {
+	// ✅ Initialize Redis client before usage
+	redis.InitRedis("redis:6379")
+
 	brokerAddress := "kafka:9092"
 	topic := "video-jobs"
 
