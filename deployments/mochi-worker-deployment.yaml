@@ -19,8 +19,8 @@ spec:
     spec:
       containers:
         - name: mochi-worker
-          image: chenghao/mochi-worker:latest  # 🔁 replace with your image
-          imagePullPolicy: Always
+          image: mochi-worker:latest
+          imagePullPolicy: IfNotPresent
           resources:
             limits:
               nvidia.com/gpu: 1                  # 🚀 GPU scheduling
