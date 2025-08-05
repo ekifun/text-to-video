@@ -15,8 +15,8 @@ from genmo.mochi_preview.pipelines import (
 
 # ──────── 🔧 Config ──────────
 KAFKA_TOPIC = "video-jobs"
-KAFKA_BROKERS = ["localhost:9092"]
-REDIS_HOST = "localhost"
+KAFKA_BROKERS = ["kafka.default.svc.cluster.local:9092"]
+REDIS_HOST = "redis"
 MODEL_DIR = os.getenv("MODEL_DIR", "/models/mochi")  # Mount this in your pod
 OUTPUT_DIR = "./videos"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
