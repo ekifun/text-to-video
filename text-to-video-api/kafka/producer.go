@@ -10,7 +10,7 @@ import (
 )
 
 var writer = kafka.NewWriter(kafka.WriterConfig{
-    Brokers:  []string{"kafka:9092"}, // ✅ fixed: use Kubernetes service name
+    Brokers: []string{"kafka.default.svc.cluster.local:9092"},
     Topic:    "video-jobs",
     Balancer: &kafka.LeastBytes{},
 })
