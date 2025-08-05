@@ -1,9 +1,12 @@
 #!/bin/bash
-set -e
-
-cd "$(dirname "$0")/.."  # Move to ~/text-to-video
+set -e  # Exit immediately on error
 
 echo "🚀 Rebuilding Docker image for mochi-worker..."
+
+# Go to the project root directory
+cd "$(dirname "$0")/.."
+
+# Build Docker image
 sudo nerdctl build -f mochi-worker/Dockerfile -t mochi-worker:latest .
 
 echo "📦 Saving image to tar archive..."
