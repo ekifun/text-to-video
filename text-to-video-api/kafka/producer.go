@@ -6,6 +6,7 @@ import (
     "text-to-video-api/models"
 
     "github.com/segmentio/kafka-go"
+	"log"
 )
 
 var writer = kafka.NewWriter(kafka.WriterConfig{
@@ -25,5 +26,9 @@ func ProduceJob(job models.Job) error {
         Value: data,
     }
 
-    return writer.WriteMessages(context.Background(), msg)
+    err = writer.WriteMessages(context.Background(), msg)
+    if err != nil {
+        log.Printf("❌ Kafka write error: %v\n", err)
+    }
+    return err
 }
