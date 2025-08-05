@@ -16,7 +16,8 @@ pyyaml>=6.0.2
 ray>=2.37.0
 sentencepiece>=0.2.0
 setuptools>=75.2.0
-torch>=2.4.1
-transformers>=4.45.2
-torchvision==0.17.0
-torchaudio==2.2.0
+torch==2.3.0
+torchvision==0.18.0
+torchaudio==2.3.0
+transformers==4.41.2
+
