@@ -2,33 +2,44 @@ import os
 import json
 import redis
 import torch
-from huggingface_hub import snapshot_download
 from kafka import KafkaConsumer
-from genmo.text2video import Text2VideoPipeline
-from genmo.utils.download import load_weights
 from datetime import datetime
 
-# ENV: these can be moved to env vars or argparse later
+from genmo.mochi_preview.pipelines import (
+    DecoderModelFactory,
+    DitModelFactory,
+    MochiSingleGPUPipeline,
+    T5ModelFactory,
+    linear_quadratic_schedule,
+)
+
+# ──────── 🔧 Config ──────────
 KAFKA_TOPIC = "video-jobs"
 KAFKA_BROKERS = ["localhost:9092"]
 REDIS_HOST = "localhost"
-MODEL_DIR = "./model_decoder"
+MODEL_DIR = os.getenv("MODEL_DIR", "/models/mochi")  # Mount this in your pod
 OUTPUT_DIR = "./videos"
-
-# Create output directory
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Setup Redis client
+# ──────── 🧠 Load Model ────────
+print("🧠 Loading Mochi model...")
+pipeline = MochiSingleGPUPipeline(
+    text_encoder_factory=T5ModelFactory(),
+    dit_factory=DitModelFactory(
+        model_path=f"{MODEL_DIR}/dit.safetensors", model_dtype="bf16"
+    ),
+    decoder_factory=DecoderModelFactory(
+        model_path=f"{MODEL_DIR}/vae.safetensors",
+    ),
+    cpu_offload=True,
+    decode_type="tiled_full",
+)
+print("✅ Model ready.")
+
+# ──────── 🔌 Setup Redis ────────
 r = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
 
-# Load the model once at startup
-print("Loading Mochi model...")
-load_weights(MODEL_DIR)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-pipe = Text2VideoPipeline.from_pretrained(MODEL_DIR).to(device).eval()
-print("Model ready ✅")
-
-# Kafka consumer
+# ──────── 🔁 Kafka Worker Loop ────────
 consumer = KafkaConsumer(
     KAFKA_TOPIC,
     bootstrap_servers=KAFKA_BROKERS,
@@ -37,7 +48,6 @@ consumer = KafkaConsumer(
     group_id="mochi-workers"
 )
 
-# Worker loop
 for msg in consumer:
     job = msg.value
     job_id = job.get("id")
@@ -45,33 +55,45 @@ for msg in consumer:
     print(f"[{datetime.now()}] 🎬 Processing job {job_id} | prompt: {prompt}")
 
     try:
-        # Update Redis status to 'processing'
-        r.hset(f"job:{job_id}", "data", json.dumps({
+        # Update Redis: job status = processing
+        r.hset(f"job:{job_id}", mapping={
             "id": job_id,
             "prompt": prompt,
             "status": "processing"
-        }))
+        })
 
-        # Run model inference
-        result = pipe(prompt, num_frames=24)
+        # Run inference
+        video = pipeline(
+            height=480,
+            width=848,
+            num_frames=31,
+            num_inference_steps=64,
+            sigma_schedule=linear_quadratic_schedule(64, 0.025),
+            cfg_schedule=[4.5] * 64,
+            batch_cfg=False,
+            prompt=prompt,
+            negative_prompt="",
+            seed=12345,
+        )
+
         video_path = os.path.join(OUTPUT_DIR, f"{job_id}.mp4")
-        result.save(video_path)
+        video.save(video_path)
 
-        # Update Redis status to 'completed'
-        r.hset(f"job:{job_id}", "data", json.dumps({
+        # Update Redis: job status = completed
+        r.hset(f"job:{job_id}", mapping={
             "id": job_id,
             "prompt": prompt,
             "status": "completed",
             "video_path": video_path
-        }))
+        })
+
         print(f"✅ Completed job {job_id} → {video_path}")
 
     except Exception as e:
-        # Update Redis status to 'failed'
-        r.hset(f"job:{job_id}", "data", json.dumps({
+        r.hset(f"job:{job_id}", mapping={
             "id": job_id,
             "prompt": prompt,
             "status": "failed",
             "error": str(e)
-        }))
+        })
         print(f"❌ Failed job {job_id}: {str(e)}")
