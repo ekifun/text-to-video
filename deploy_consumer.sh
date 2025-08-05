@@ -2,7 +2,7 @@
 set -e
 
 echo "📦 Building consumer image..."
-sudo nerdctl build -t text-to-video-consumer:latest -f Dockerfile.consumer .
+DOCKER_BUILDKIT=0 sudo nerdctl build -t text-to-video-consumer:latest -f Dockerfile.consumer .
 
 echo "💾 Saving image to tar archive..."
 sudo nerdctl save -o text-to-video-consumer.tar text-to-video-consumer:latest
