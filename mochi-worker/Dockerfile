@@ -19,7 +19,9 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # Add Mochi worker source
 COPY mochi_worker.py .
 COPY entrypoint.sh .
-COPY models/src/genmo /app/genmo  # ✅ Include genmo module
+# ✅ Include genmo module
+COPY models/src/genmo /app/genmo
+
 
 # Ensure Python can find genmo/
 ENV PYTHONPATH=/app
