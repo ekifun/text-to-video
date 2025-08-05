@@ -3,21 +3,23 @@ FROM golang:1.21 AS builder
 
 WORKDIR /app
 
-# Copy go mod files and tidy
+# Copy go.mod and go.sum first (for caching dependencies)
 COPY go.mod go.sum ./
 RUN go mod tidy
 
-# Copy source files
+# Copy the entire source code
 COPY . .
 
 # Build the consumer binary
+# This compiles consumer.go as a standalone app; make sure it has `package main` and a main() func
 RUN CGO_ENABLED=0 GOOS=linux go build -o consumer ./kafka/consumer.go
 
-# Stage 2: Minimal image
+# Stage 2: Minimal runtime image
 FROM alpine:latest
 
 WORKDIR /root/
 
+# Copy only the binary
 COPY --from=builder /app/consumer .
 
 # Run the consumer
