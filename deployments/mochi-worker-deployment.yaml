@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: mochi-worker
-          image: mochi-worker:latest
+          image: docker.io/library/mochi-worker:latest
           imagePullPolicy: IfNotPresent
           resources:
             limits:
