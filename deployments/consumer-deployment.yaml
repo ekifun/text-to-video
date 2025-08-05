@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-consumer
+  labels:
+    app: video-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: video-consumer
+  template:
+    metadata:
+      labels:
+        app: video-consumer
+    spec:
+      containers:
+        - name: consumer
+          image: text-to-video-consumer:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: REDIS_ADDR
+              value: "redis:6379"
+            - name: KAFKA_BROKER
+              value: "kafka:9092"
+            - name: KAFKA_TOPIC
+              value: "video-jobs"
