@@ -1,14 +1,11 @@
 #!/bin/bash
+set -e
 
-# Go to the script's directory
-cd "$(dirname "$0")"
-
-# Move to project root
-cd ..
-
-# Build the consumer image
+echo "📦 Building consumer image..."
 sudo nerdctl build -t text-to-video-consumer:latest -f Dockerfile.consumer .
 
-# Save and import into containerd for Kubernetes
+echo "💾 Saving image to tar archive..."
 sudo nerdctl save -o text-to-video-consumer.tar text-to-video-consumer:latest
+
+echo "📥 Importing image into containerd (Kubernetes)..."
 sudo ctr -n k8s.io images import text-to-video-consumer.tar
