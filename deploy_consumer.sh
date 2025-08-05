@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 echo "📦 Building consumer image..."
 sudo nerdctl build -t text-to-video-consumer:latest -f Dockerfile.consumer .
