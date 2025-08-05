@@ -5,3 +5,4 @@ huggingface_hub
 accelerate
 transformers
 ray==2.20.0
+einops
